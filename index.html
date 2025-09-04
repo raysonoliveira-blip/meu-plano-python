@@ -44,6 +44,8 @@
             color: #4F46E5;
             text-decoration: none;
             transition: color 0.2s;
+            display: block;
+            margin-top: 8px;
         }
         .resource-link:hover {
             color: #312E81;
@@ -67,13 +69,44 @@
                 height: 400px;
             }
         }
+        /* Coach Styles */
+        #coach-modal {
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+        }
+        .coach-message.user {
+            background-color: #DBEAFE;
+            align-self: flex-end;
+        }
+        .coach-message.model {
+            background-color: #F3F4F6;
+            align-self: flex-start;
+        }
+        .typing-indicator span {
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+        .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1.0); }
+        }
+        /* Progress Tracker Styles */
+        .rating-star {
+            cursor: pointer;
+            color: #D1D5DB; /* gray-300 */
+            transition: color 0.2s;
+        }
+        .rating-star:hover,
+        .rating-star.selected {
+            color: #FBBF24; /* amber-400 */
+        }
     </style>
 </head>
 <body class="antialiased">
     <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <header class="text-center mb-12">
             <h1 class="text-4xl md:text-5xl font-bold text-gray-800">Plano de Estudo Python</h1>
-            <p class="mt-4 text-lg text-gray-600">Sua jornada de 8 semanas, do zero ao básico, com 2 horas por dia.</p>
+            <p class="mt-4 text-lg text-gray-600">A sua jornada de 8 semanas, do zero ao básico, com 2 horas por dia.</p>
         </header>
 
         <main>
@@ -86,9 +119,48 @@
                 </div>
             </section>
 
+             <!-- New Progress Tracker Section -->
+            <section id="progress-tracker" class="mb-16">
+                <h2 class="text-3xl font-bold text-gray-800 text-center mb-2">Meu Diário de Bordo</h2>
+                <p class="text-gray-600 text-center mb-8 max-w-2xl mx-auto">Registe aqui as suas sessões de estudo para acompanhar o seu progresso e manter o seu gráfico atualizado.</p>
+                <div class="grid md:grid-cols-2 gap-8 items-start">
+                    <div class="card p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">Registar Nova Sessão</h3>
+                        <form id="log-form" class="space-y-4">
+                            <div>
+                                <label for="week-select" class="block text-sm font-medium text-gray-700">Semana</label>
+                                <select id="week-select" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"></select>
+                            </div>
+                            <div>
+                                <label for="hours-input" class="block text-sm font-medium text-gray-700">Horas Estudadas</label>
+                                <input type="number" id="hours-input" min="0.5" step="0.5" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Nível de Confiança</label>
+                                <div id="rating-stars" class="mt-1 flex space-x-1">
+                                    <!-- Stars will be injected here -->
+                                </div>
+                                <input type="hidden" id="rating-value" value="0">
+                            </div>
+                            <div>
+                                <label for="notes-input" class="block text-sm font-medium text-gray-700">Notas sobre o que aprendi</label>
+                                <textarea id="notes-input" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Ex: Entendi bem as funções, mas preciso praticar mais os dicionários."></textarea>
+                            </div>
+                            <button type="submit" id="log-submit-button" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50">Registar</button>
+                        </form>
+                    </div>
+                    <div class="card p-6">
+                         <h3 class="text-xl font-bold text-gray-800 mb-4">Histórico de Estudos</h3>
+                         <div id="log-list" class="space-y-4 max-h-[450px] overflow-y-auto pr-2">
+                            <p id="log-placeholder" class="text-gray-500 text-center py-8">Ainda não há registos. Comece a sua primeira sessão de estudo!</p>
+                         </div>
+                    </div>
+                </div>
+            </section>
+
             <section id="progress" class="text-center">
-                <h2 class="text-3xl font-bold text-gray-800 mb-2">Sua Trilha de Aprendizagem</h2>
-                <p class="text-gray-600 mb-8 max-w-2xl mx-auto">Este gráfico mostra o acúmulo de novos conceitos que você dominará a cada semana. Use-o como um mapa para visualizar seu progresso e se manter motivado.</p>
+                <h2 id="progress-title" class="text-3xl font-bold text-gray-800 text-center mb-2">A Sua Trilha de Aprendizagem</h2>
+                <p class="text-gray-600 mb-8 max-w-2xl mx-auto">Este gráfico é atualizado em tempo real com as horas que registou no seu Diário de Bordo. É o seu esforço, visualizado.</p>
                 <div class="card p-4 sm:p-6">
                     <div class="chart-container">
                         <canvas id="progressChart"></canvas>
@@ -100,8 +172,8 @@
                  <h2 class="text-3xl font-bold text-gray-800 mb-4">E depois das 8 semanas?</h2>
                  <div class="max-w-4xl mx-auto text-left grid md:grid-cols-2 gap-8">
                      <div class="card p-6">
-                         <h3 class="text-xl font-bold text-gray-800 mb-3">Aprofunde seus Conhecimentos</h3>
-                         <p class="text-gray-600">Com a base sólida que você construiu, agora é hora de explorar áreas específicas. Escolha um caminho que te interesse e mergulhe fundo!</p>
+                         <h3 class="text-xl font-bold text-gray-800 mb-3">Aprofunde os Seus Conhecimentos</h3>
+                         <p class="text-gray-600">Com a base sólida que construiu, agora é hora de explorar áreas específicas. Escolha um caminho que lhe interesse e mergulhe fundo!</p>
                          <ul class="mt-4 space-y-2 list-disc list-inside text-gray-600">
                              <li><strong>Desenvolvimento Web:</strong> Aprenda frameworks como Django ou Flask.</li>
                              <li><strong>Ciência de Dados:</strong> Explore bibliotecas como Pandas, NumPy e Matplotlib.</li>
@@ -111,12 +183,12 @@
                      </div>
                      <div class="card p-6">
                          <h3 class="text-xl font-bold text-gray-800 mb-3">Pratique Constantemente</h3>
-                         <p class="text-gray-600">A programação é uma habilidade que melhora com a prática. Continue resolvendo desafios e construindo projetos pessoais.</p>
+                         <p class="text-gray-600">A programação é uma habilidade que melhora com a prática. Continue a resolver desafios e a construir projetos pessoais.</p>
                          <ul class="mt-4 space-y-2">
                              <li>🚀 <a href="https://www.beecrowd.com.br" target="_blank" class="resource-link">Beecrowd</a></li>
                              <li>💻 <a href="https://www.hackerrank.com" target="_blank" class="resource-link">HackerRank</a></li>
                              <li>💡 <a href="https://www.codewars.com" target="_blank" class="resource-link">CodeWars</a></li>
-                             <li>📂 Crie seu portfólio no <a href="https://github.com" target="_blank" class="resource-link">GitHub</a> para mostrar seus projetos.</li>
+                             <li>📂 Crie o seu portfólio no <a href="https://github.com" target="_blank" class="resource-link">GitHub</a> para mostrar os seus projetos.</li>
                          </ul>
                      </div>
                  </div>
@@ -124,301 +196,109 @@
         </main>
     </div>
 
-    <script>
+    <!-- Coach Components -->
+    <button id="coach-button" class="fixed bottom-6 right-6 bg-indigo-600 text-white p-4 rounded-full shadow-lg hover:bg-indigo-700 transition-transform transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M10 9a3 3 0 100-6 3 3 0 000 6zM10 11a6 6 0 016 6H4a6 6 0 016-6z" />
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm-5.922-1.39a6.012 6.012 0 0111.844 0H4.078z" clip-rule="evenodd" />
+        </svg>
+    </button>
+    
+    <div id="coach-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden opacity-0 scale-95">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col h-[80vh] max-h-[700px]">
+            <header class="flex items-center justify-between p-4 border-b">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-indigo-100 p-2 rounded-full">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-800">Seu Coach Python</h3>
+                </div>
+                <button id="close-coach-modal" class="text-gray-400 hover:text-gray-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </header>
+            <div id="chat-window" class="flex-grow p-4 overflow-y-auto space-y-4">
+            </div>
+            <div id="typing-indicator" class="p-4 hidden">
+                <div class="flex items-center space-x-2">
+                    <div class="typing-indicator">
+                        <span class="w-2 h-2 bg-gray-400 rounded-full inline-block"></span>
+                        <span class="w-2 h-2 bg-gray-400 rounded-full inline-block"></span>
+                        <span class="w-2 h-2 bg-gray-400 rounded-full inline-block"></span>
+                    </div>
+                    <span class="text-sm text-gray-500">PyCoach está a digitar...</span>
+                </div>
+            </div>
+            <footer class="p-4 border-t">
+                <form id="chat-form" class="flex items-center space-x-2">
+                    <input type="text" id="chat-input" placeholder="Pergunte algo sobre Python..." class="w-full px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500" autocomplete="off">
+                    <button type="submit" class="bg-indigo-600 text-white p-3 rounded-full hover:bg-indigo-700 transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg>
+                    </button>
+                </form>
+            </footer>
+        </div>
+    </div>
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        let db, auth;
+        let userId;
+        let isFirebaseReady = false;
+
+        try {
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+            
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    userId = user.uid;
+                } else {
+                    await signInAnonymously(auth);
+                }
+                isFirebaseReady = true;
+                listenToLogs();
+            });
+
+        } catch (e) {
+            console.error("Firebase initialization failed:", e);
+        }
+
+        // ... (Existing script for study plan)
         const studyPlan = [
-            {
-                week: 0,
-                title: "Semana 0: Preparação",
-                goal: "Configurar seu ambiente de desenvolvimento e escrever seu primeiro 'Olá, Mundo!'.",
-                schedule: {
-                    "Segunda": {
-                        topic: "O que é Python e por que aprender?",
-                        resources: [{ text: "Vídeo: História do Python", url: "https://www.youtube.com/watch?v=syg_Od-IM2U" }]
-                    },
-                    "Terça": {
-                        topic: "Instalando Python no seu Computador",
-                        resources: [
-                            { text: "Vídeo: Instalação no Windows", url: "https://www.youtube.com/watch?v=CaaTlgfYq_E" },
-                            { text: "Guia: Site Oficial do Python", url: "https://www.python.org/downloads/" }
-                        ]
-                    },
-                    "Quarta": {
-                        topic: "Instalando e Configurando o VS Code",
-                        resources: [{ text: "Vídeo: Deixando o VS Code pronto", url: "https://www.youtube.com/watch?v=c5fe_i6c2D8" }]
-                    },
-                    "Quinta": {
-                        topic: "Seu primeiro programa: 'Olá, Mundo!'",
-                        resources: [{ text: "Vídeo: O primeiro programa", url: "https://www.youtube.com/watch?v=nIHs1_j2qG8" }]
-                    },
-                    "Sexta": {
-                        topic: "Revisão e Experimentação",
-                        resources: [{ text: "Prática: Modifique o 'Olá, Mundo!' para exibir mensagens diferentes." }]
-                    }
-                }
-            },
-            {
-                week: 1,
-                title: "Semana 1: Fundamentos",
-                goal: "Entender o que são variáveis, tipos de dados básicos e como fazer operações matemáticas simples.",
-                schedule: {
-                    "Segunda": {
-                        topic: "Variáveis e Tipos de Dados (int, float, bool, str)",
-                        resources: [{ text: "Vídeo: Tipos Primitivos", url: "https://www.youtube.com/watch?v=hdDHg1p3YVc" }]
-                    },
-                    "Terça": {
-                        topic: "Operadores Aritméticos (+, -, *, /, %, **)",
-                        resources: [{ text: "Vídeo: Operadores Aritméticos", url: "https://www.youtube.com/watch?v=Vw6gLypRKmY" }]
-                    },
-                    "Quarta": {
-                        topic: "Funções `print()` e `input()`",
-                        resources: [{ text: "Prática: Crie um script que pede o nome do usuário e o cumprimenta." }]
-                    },
-                    "Quinta": {
-                        topic: "Manipulação de Strings (Básico)",
-                        resources: [{ text: "Vídeo: Manipulando Textos", url: "https://www.youtube.com/watch?v=a7ryie6Nuzo" }]
-                    },
-                    "Sexta": {
-                        topic: "Projeto da Semana: Calculadora Simples",
-                        resources: [{ text: "Desafio: Crie um programa que pede dois números e mostra a soma, subtração, multiplicação e divisão." }]
-                    }
-                }
-            },
-            {
-                week: 2,
-                title: "Semana 2: Lógica e Decisões",
-                goal: "Aprender a controlar o fluxo do seu programa com condições e tomar decisões baseadas em dados.",
-                schedule: {
-                    "Segunda": {
-                        topic: "Operadores Lógicos (and, or, not) e Relacionais (==, !=, >, <)",
-                        resources: [{ text: "Documentação: Expressões Booleanas", url: "https://docs.python.org/pt-br/3/library/stdtypes.html#boolean-operations-and-or-not" }]
-                    },
-                    "Terça": {
-                        topic: "Estruturas Condicionais: `if`, `else`",
-                        resources: [{ text: "Vídeo: Condições (Parte 1)", url: "https://www.youtube.com/watch?v=K10u3XIf1-Q" }]
-                    },
-                    "Quarta": {
-                        topic: "Estruturas Condicionais: `elif`",
-                        resources: [{ text: "Vídeo: Condições Aninhadas", url: "https://www.youtube.com/watch?v=cXLdV91D_2I" }]
-                    },
-                    "Quinta": {
-                        topic: "Prática com Condicionais",
-                        resources: [{ text: "Desafio: Crie um programa que verifica se uma pessoa pode votar com base na idade." }]
-                    },
-                    "Sexta": {
-                        topic: "Projeto da Semana: Jogo de Adivinhar o Número",
-                        resources: [{ text: "Desafio: Faça um jogo onde o computador 'pensa' em um número e o usuário tenta adivinhar." }]
-                    }
-                }
-            },
-            {
-                week: 3,
-                title: "Semana 3: Repetições e Listas",
-                goal: "Aprender a repetir tarefas com laços e a armazenar múltiplos valores em listas.",
-                schedule: {
-                    "Segunda": {
-                        topic: "Laço de Repetição `while`",
-                        resources: [{ text: "Vídeo: Estrutura de Repetição `while`", url: "https://www.youtube.com/watch?v=d_kS_5pYj1Q" }]
-                    },
-                    "Terça": {
-                        topic: "Laço de Repetição `for` e `range()`",
-                        resources: [{ text: "Vídeo: Estrutura de Repetição `for`", url: "https://www.youtube.com/watch?v=iF2MdbrG_0s" }]
-                    },
-                    "Quarta": {
-                        topic: "Introdução a Listas",
-                        resources: [{ text: "Vídeo: Variáveis Compostas (Listas)", url: "https://www.youtube.com/watch?v=N1hTsbW_ezo" }]
-                    },
-                    "Quinta": {
-                        topic: "Manipulando Listas (adicionar, remover, acessar)",
-                        resources: [{ text: "Prática: Crie uma lista de compras e permita ao usuário adicionar e remover itens." }]
-                    },
-                    "Sexta": {
-                        topic: "Projeto da Semana: Lista de Tarefas",
-                        resources: [{ text: "Desafio: Crie um programa de lista de tarefas onde o usuário pode ver, adicionar e marcar tarefas como concluídas." }]
-                    }
-                }
-            },
-            {
-                week: 4,
-                title: "Semana 4: Funções e Dicionários",
-                goal: "Organizar seu código em blocos reutilizáveis com funções e aprender a usar dicionários para dados mais complexos.",
-                schedule: {
-                    "Segunda": {
-                        topic: "Introdução a Funções (def, return)",
-                        resources: [{ text: "Vídeo: Funções (Parte 1)", url: "https://www.youtube.com/watch?v=u4_cr_J_AbE" }]
-                    },
-                    "Terça": {
-                        topic: "Parâmetros e Escopo de Variáveis",
-                        resources: [{ text: "Vídeo: Funções (Parte 2)", url: "https://www.youtube.com/watch?v=SifYYsXhLM8" }]
-                    },
-                    "Quarta": {
-                        topic: "Introdução a Dicionários",
-                        resources: [{ text: "Vídeo: Dicionários", url: "https://www.youtube.com/watch?v=7acDQYn_G3E" }]
-                    },
-                    "Quinta": {
-                        topic: "Manipulando Dicionários",
-                        resources: [{ text: "Prática: Crie um dicionário para armazenar informações de um usuário (nome, idade, cidade)." }]
-                    },
-                    "Sexta": {
-                        topic: "Projeto da Semana: Agenda de Contatos",
-                        resources: [{ text: "Desafio: Use um dicionário para criar uma agenda onde você pode adicionar, remover e buscar contatos." }]
-                    }
-                }
-            },
-            {
-                week: 5,
-                title: "Semana 5: Módulos e Erros",
-                goal: "Aprender a usar código de outras pessoas (módulos) e a lidar com erros inesperados de forma elegante.",
-                schedule: {
-                    "Segunda": {
-                        topic: "Importando Módulos (math, random)",
-                        resources: [{ text: "Vídeo: Módulos e Pacotes", url: "https://www.youtube.com/watch?v=oV1hS46i_b4" }]
-                    },
-                    "Terça": {
-                        topic: "Tratamento de Exceções (try, except)",
-                        resources: [{ text: "Vídeo: Tratamento de Erros e Exceções", url: "https://www.youtube.com/watch?v=6S-S2p_3a20" }]
-                    },
-                    "Quarta": {
-                        topic: "Cláusulas `else` e `finally` no tratamento de erros",
-                        resources: [{ text: "Documentação: Tratando Exceções", url: "https://docs.python.org/pt-br/3/tutorial/errors.html" }]
-                    },
-                    "Quinta": {
-                        topic: "Prática com Módulos e Exceções",
-                        resources: [{ text: "Desafio: Melhore a calculadora da Semana 1 para não quebrar se o usuário digitar um texto em vez de número." }]
-                    },
-                    "Sexta": {
-                        topic: "Projeto da Semana: Gerador de Senhas",
-                        resources: [{ text: "Desafio: Crie um programa que gera senhas aleatórias com um tamanho definido pelo usuário, usando o módulo `random`." }]
-                    }
-                }
-            },
-            {
-                week: 6,
-                title: "Semana 6: Manipulação de Arquivos",
-                goal: "Fazer seus programas salvarem e lerem informações de arquivos, tornando os dados persistentes.",
-                schedule: {
-                    "Segunda": {
-                        topic: "Lendo Arquivos de Texto (.txt)",
-                        resources: [{ text: "Tutorial: Leitura e Escrita de Arquivos", url: "https://realpython.com/read-write-files-python/" }]
-                    },
-                    "Terça": {
-                        topic: "Escrevendo e Adicionando Conteúdo em Arquivos",
-                        resources: [{ text: "Prática: Crie um script que pede ao usuário para escrever uma frase e a salva em um 'diario.txt'." }]
-                    },
-                    "Quarta": {
-                        topic: "Gerenciador de Contexto `with open()`",
-                        resources: [{ text: "Explicação: Por que usar 'with'?", url: "https://pylessons.com/with-statement-in-python" }]
-                    },
-                    "Quinta": {
-                        topic: "Revisão e Prática",
-                        resources: [{ text: "Desafio: Leia o arquivo 'diario.txt' e exiba seu conteúdo no console." }]
-                    },
-                    "Sexta": {
-                        topic: "Projeto da Semana: Salvar a Agenda",
-                        resources: [{ text: "Desafio: Modifique a agenda de contatos da Semana 4 para salvar os contatos em um arquivo e carregá-los ao iniciar." }]
-                    }
-                }
-            },
-            {
-                week: 7,
-                title: "Semana 7: Orientação a Objetos",
-                goal: "Introdução ao paradigma de Programação Orientada a Objetos (POO), uma forma poderosa de estruturar programas maiores.",
-                schedule: {
-                    "Segunda": {
-                        topic: "Conceitos de POO: Classes e Objetos",
-                        resources: [{ text: "Vídeo: O que é POO?", url: "https://www.youtube.com/watch?v=Qd8_v1-iO_E" }]
-                    },
-                    "Terça": {
-                        topic: "Criando sua primeira Classe e Atributos",
-                        resources: [{ text: "Vídeo: Classes e Objetos em Python", url: "https://www.youtube.com/watch?v=Ej_02QuJ_f8" }]
-                    },
-                    "Quarta": {
-                        topic: "Métodos e o Construtor `__init__`",
-                        resources: [{ text: "Prática: Crie uma classe 'Carro' com atributos como 'marca', 'modelo' e 'ano'." }]
-                    },
-                    "Quinta": {
-                        topic: "Instanciando Objetos e usando Métodos",
-                        resources: [{ text: "Prática: Adicione métodos como 'ligar()' e 'acelerar()' à sua classe Carro." }]
-                    },
-                    "Sexta": {
-                        topic: "Projeto da Semana: Modelagem",
-                        resources: [{ text: "Desafio: Crie uma classe 'ContaBancaria' com atributos (saldo, titular) e métodos (depositar, sacar)." }]
-                    }
-                }
-            },
-            {
-                week: 8,
-                title: "Semana 8: Projeto Final",
-                goal: "Consolidar todo o conhecimento adquirido em um projeto prático que integra os principais conceitos aprendidos.",
-                schedule: {
-                    "Segunda": {
-                        topic: "Planejamento do Projeto Final",
-                        resources: [{ text: "Tarefa: Defina as funcionalidades do seu sistema de gerenciamento de uma 'Biblioteca Pessoal'." }]
-                    },
-                    "Terça": {
-                        topic: "Desenvolvimento: Classes e Estrutura de Dados",
-                        resources: [{ text: "Desafio: Crie a classe 'Livro' e decida como armazenar sua coleção de livros (lista de objetos)." }]
-                    },
-                    "Quarta": {
-                        topic: "Desenvolvimento: Funções Principais",
-                        resources: [{ text: "Desafio: Implemente as funções para adicionar, remover e listar livros." }]
-                    },
-                    "Quinta": {
-                        topic: "Desenvolvimento: Persistência de Dados",
-                        resources: [{ text: "Desafio: Faça o sistema salvar sua biblioteca em um arquivo e carregar ao iniciar." }]
-                    },
-                    "Sexta": {
-                        topic: "Revisão, Refatoração e Comemoração!",
-                        resources: [{ text: "Parabéns! Revise seu código, melhore o que for possível e comemore sua conquista!" }]
-                    }
-                }
-            }
+            { week: 0, title: "Semana 0: Preparação", goal: "Configurar o seu ambiente de desenvolvimento e escrever o seu primeiro 'Olá, Mundo!'.", schedule: { "Segunda": { topic: "O que é e porque aprender Python?", resources: [{ text: "Vídeo: Porque é que o Python é tão popular?", url: "https://www.youtube.com/watch?v=S9uPNppGsGo" }] }, "Terça": { topic: "A instalar o Python", resources: [{ text: "Vídeo: Instalação do Python no Windows (Curso em Vídeo)", url: "https://www.youtube.com/watch?v=ElRd0cbXIv4" }, { text: "Guia: Site Oficial do Python", url: "https://www.python.org/downloads/" }] }, "Quarta": { topic: "A instalar e configurar o VS Code para Python", resources: [{ text: "Vídeo Oficial: Introdução ao Python no VS Code (Microsoft)", url: "https://www.youtube.com/watch?v=7EXd4_ttIuw" }, { text: "Guia em Texto (Oficial): Tutorial VS Code", url: "https://code.visualstudio.com/docs/python/python-tutorial" }] }, "Quinta": { topic: "O seu primeiro programa: 'Olá, Mundo!'", resources: [{ text: "Vídeo Principal: O seu Primeiro Código (Hashtag Programação)", url: "https://www.youtube.com/watch?v=GQpQha2Mfpg" }] }, "Sexta": { topic: "Revisão e Experimentação", resources: [{ text: "Prática: Modifique o 'Olá, Mundo!' para exibir mensagens diferentes." }] } } },
+            { week: 1, title: "Semana 1: Fundamentos", goal: "Entender o que são variáveis, tipos de dados básicos e como fazer operações matemáticas simples.", schedule: { "Segunda": { topic: "Variáveis e Tipos de Dados (int, float, bool, str)", resources: [{ text: "Vídeo: Tipos Primitivos", url: "https://www.youtube.com/watch?v=hdDHg1p3YVc" }] }, "Terça": { topic: "Operadores Aritméticos (+, -, *, /, %, **)", resources: [{ text: "Vídeo: Operadores Aritméticos", url: "https://www.youtube.com/watch?v=Vw6gLypRKmY" }] }, "Quarta": { topic: "Funções `print()` e `input()`", resources: [{ text: "Prática: Crie um script que pede o nome do utilizador e o cumprimenta." }] }, "Quinta": { topic: "Manipulação de Strings (Básico)", resources: [{ text: "Vídeo: A manipular Textos", url: "https://www.youtube.com/watch?v=a7ryie6Nuzo" }] }, "Sexta": { topic: "Projeto da Semana: Calculadora Simples", resources: [{ text: "Desafio: Crie um programa que pede dois números e mostra a soma, subtração, multiplicação e divisão." }] } } },
+            { week: 2, title: "Semana 2: Lógica e Decisões", goal: "Aprender a controlar o fluxo do seu programa com condições e a tomar decisões baseadas em dados.", schedule: { "Segunda": { topic: "Operadores Lógicos (and, or, not) e Relacionais (==, !=, >, <)", resources: [{ text: "Documentação: Expressões Booleanas", url: "https://docs.python.org/pt-br/3/library/stdtypes.html#boolean-operations-and-or-not" }] }, "Terça": { topic: "Estruturas Condicionais: `if`, `else`", resources: [{ text: "Vídeo: Condições (Parte 1)", url: "https://www.youtube.com/watch?v=K10u3XIf1-Q" }] }, "Quarta": { topic: "Estruturas Condicionais: `elif`", resources: [{ text: "Vídeo: Condições Aninhadas", url: "https://www.youtube.com/watch?v=cXLdV91D_2I" }] }, "Quinta": { topic: "Prática com Condicionais", resources: [{ text: "Desafio: Crie um programa que verifica se uma pessoa pode votar com base na idade." }] }, "Sexta": { topic: "Projeto da Semana: Jogo de Adivinhar o Número", resources: [{ text: "Desafio: Faça um jogo onde o computador 'pensa' num número e o utilizador tenta adivinhar." }] } } },
+            { week: 3, title: "Semana 3: Repetições e Listas", goal: "Aprender a repetir tarefas com laços e a armazenar múltiplos valores em listas.", schedule: { "Segunda": { topic: "Laço de Repetição `while`", resources: [{ text: "Vídeo: Estrutura de Repetição `while`", url: "https://www.youtube.com/watch?v=d_kS_5pYj1Q" }] }, "Terça": { topic: "Laço de Repetição `for` e `range()`", resources: [{ text: "Vídeo: Estrutura de Repetição `for`", url: "https://www.youtube.com/watch?v=iF2MdbrG_0s" }] }, "Quarta": { topic: "Introdução a Listas", resources: [{ text: "Vídeo: Variáveis Compostas (Listas)", url: "https://www.youtube.com/watch?v=N1hTsbW_ezo" }] }, "Quinta": { topic: "A manipular Listas (adicionar, remover, aceder)", resources: [{ text: "Prática: Crie uma lista de compras e permita ao utilizador adicionar e remover itens." }] }, "Sexta": { topic: "Projeto da Semana: Lista de Tarefas", resources: [{ text: "Desafio: Crie um programa de lista de tarefas onde o utilizador pode ver, adicionar e marcar tarefas como concluídas." }] } } },
+            { week: 4, title: "Semana 4: Funções e Dicionários", goal: "Organizar o seu código em blocos reutilizáveis com funções e aprender a usar dicionários para dados mais complexos.", schedule: { "Segunda": { topic: "Introdução a Funções (def, return)", resources: [{ text: "Vídeo: Funções (Parte 1)", url: "https://www.youtube.com/watch?v=u4_cr_J_AbE" }] }, "Terça": { topic: "Parâmetros e Âmbito de Variáveis", resources: [{ text: "Vídeo: Funções (Parte 2)", url: "https://www.youtube.com/watch?v=SifYYsXhLM8" }] }, "Quarta": { topic: "Introdução a Dicionários", resources: [{ text: "Vídeo: Dicionários", url: "https://www.youtube.com/watch?v=7acDQYn_G3E" }] }, "Quinta": { topic: "A manipular Dicionários", resources: [{ text: "Prática: Crie um dicionário para armazenar informações de um utilizador (nome, idade, cidade)." }] }, "Sexta": { topic: "Projeto da Semana: Agenda de Contactos", resources: [{ text: "Desafio: Use um dicionário para criar uma agenda onde pode adicionar, remover e procurar contactos." }] } } },
+            { week: 5, title: "Semana 5: Módulos e Erros", goal: "Aprender a usar código de outras pessoas (módulos) e a lidar com erros inesperados de forma elegante.", schedule: { "Segunda": { topic: "A importar Módulos (math, random)", resources: [{ text: "Vídeo: Módulos e Pacotes", url: "https://www.youtube.com/watch?v=oV1hS46i_b4" }] }, "Terça": { topic: "Tratamento de Exceções (try, except)", resources: [{ text: "Vídeo: Tratamento de Erros e Exceções", url: "https://www.youtube.com/watch?v=6S-S2p_3a20" }] }, "Quarta": { topic: "Cláusulas `else` e `finally` no tratamento de erros", resources: [{ text: "Documentação: A tratar Exceções", url: "https://docs.python.org/pt-br/3/tutorial/errors.html" }] }, "Quinta": { topic: "Prática com Módulos e Exceções", resources: [{ text: "Desafio: Melhore a calculadora da Semana 1 para não quebrar se o utilizador digitar um texto em vez de um número." }] }, "Sexta": { topic: "Projeto da Semana: Gerador de Palavras-passe", resources: [{ text: "Desafio: Crie um programa que gera palavras-passe aleatórias com um tamanho definido pelo utilizador, usando o módulo `random`." }] } } },
+            { week: 6, title: "Semana 6: Manipulação de Ficheiros", goal: "Fazer os seus programas guardarem e lerem informações de ficheiros, tornando os dados persistentes.", schedule: { "Segunda": { topic: "A ler Ficheiros de Texto (.txt)", resources: [{ text: "Tutorial: Leitura e Escrita de Ficheiros", url: "https://realpython.com/read-write-files-python/" }] }, "Terça": { topic: "A escrever e adicionar conteúdo em ficheiros", resources: [{ text: "Prática: Crie um script que pede ao utilizador para escrever uma frase e a guarda num 'diario.txt'." }] }, "Quarta": { topic: "Gestor de Contexto `with open()`", resources: [{ text: "Explicação: Porque usar 'with'?", url: "https://pylessons.com/with-statement-in-python" }] }, "Quinta": { topic: "Revisão e Prática", resources: [{ text: "Desafio: Leia o ficheiro 'diario.txt' e exiba o seu conteúdo na consola." }] }, "Sexta": { topic: "Projeto da Semana: Guardar a Agenda", resources: [{ text: "Desafio: Modifique a agenda de contactos da Semana 4 para guardar os contactos num ficheiro e carregá-los ao iniciar." }] } } },
+            { week: 7, title: "Semana 7: Orientação a Objetos", goal: "Introdução ao paradigma de Programação Orientada a Objetos (POO), uma forma poderosa de estruturar programas maiores.", schedule: { "Segunda": { topic: "Conceitos de POO: Classes e Objetos", resources: [{ text: "Vídeo: O que é a Programação Orientada a Objetos?", url: "https://www.youtube.com/watch?v=GLE-z99q_2o" }] }, "Terça": { topic: "A criar a sua primeira Classe e Atributos", resources: [{ text: "Vídeo: Classes em Python na Prática", url: "https://www.youtube.com/watch?v=mprk0g9Sgok" }] }, "Quarta": { topic: "Métodos e o Construtor `__init__`", resources: [{ text: "Prática: Crie uma classe 'Carro' com atributos como 'marca', 'modelo' e 'ano'." }] }, "Quinta": { topic: "A instanciar Objetos e a usar Métodos", resources: [{ text: "Prática: Adicione métodos como 'ligar()' e 'acelerar()' à sua classe Carro." }] }, "Sexta": { topic: "Projeto da Semana: Modelação", resources: [{ text: "Desafio: Crie uma classe 'ContaBancaria' com atributos (saldo, titular) e métodos (depositar, sacar)." }] } } },
+            { week: 8, title: "Semana 8: Projeto Final", goal: "Consolidar todo o conhecimento adquirido num projeto prático que integra os principais conceitos aprendidos.", schedule: { "Segunda": { topic: "Planeamento do Projeto Final", resources: [{ text: "Tarefa: Defina as funcionalidades do seu sistema de gestão de uma 'Biblioteca Pessoal'." }] }, "Terça": { topic: "Desenvolvimento: Classes e Estrutura de Dados", resources: [{ text: "Desafio: Crie a classe 'Livro' e decida como armazenar a sua coleção de livros (lista de objetos)." }] }, "Quarta": { topic: "Desenvolvimento: Funções Principais", resources: [{ text: "Desafio: Implemente as funções para adicionar, remover e listar livros." }] }, "Quinta": { topic: "Desenvolvimento: Persistência de Dados", resources: [{ text: "Desafio: Faça o sistema guardar a sua biblioteca num ficheiro e carregar ao iniciar." }] }, "Sexta": { topic: "Revisão, Refatoração e Comemoração!", resources: [{ text: "Parabéns! Reveja o seu código, melhore o que for possível e comemore a sua conquista!" }] } } }
         ];
 
         const navContainer = document.querySelector('nav');
         const contentContainer = document.getElementById('plan-content');
         let currentWeek = 0;
-
+        let progressChart;
+        
         function renderPlan(weekIndex) {
             const weekData = studyPlan.find(w => w.week === weekIndex);
             if (!weekData) return;
-
             currentWeek = weekIndex;
-
-            contentContainer.innerHTML = `
-                <div class="card p-6 md:p-8 animate-fade-in">
-                    <h3 class="text-2xl font-bold text-gray-800">${weekData.title}</h3>
-                    <div class="goal-card p-4 my-6">
-                        <p class="font-semibold text-indigo-800">🎯 Meta da Semana:</p>
-                        <p class="text-indigo-700">${weekData.goal}</p>
-                    </div>
-                    <div class="space-y-6">
-                        ${Object.entries(weekData.schedule).map(([day, details]) => `
-                            <div class="task-item pl-4 py-2">
-                                <span class="text-sm font-semibold text-gray-500 uppercase">${day}</span>
-                                <h4 class="text-lg font-semibold mt-1">${details.topic}</h4>
-                                <div class="mt-2 text-sm">
-                                    ${details.resources.map(res => 
-                                        res.url 
-                                        ? `<a href="${res.url}" target="_blank" class="resource-link flex items-center space-x-2 group">
-                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
-                                             <span>${res.text}</span>
-                                           </a>`
-                                        : `<span class="text-gray-600">${res.text}</span>`
-                                    ).join('')}
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
-
+            contentContainer.innerHTML = `<div class="card p-6 md:p-8 animate-fade-in"><h3 class="text-2xl font-bold text-gray-800">${weekData.title}</h3><div class="goal-card p-4 my-6"><p class="font-semibold text-indigo-800">🎯 Meta da Semana:</p><p class="text-indigo-700">${weekData.goal}</p></div><div class="space-y-6">${Object.entries(weekData.schedule).map(([day, details]) => `<div class="task-item pl-4 py-2"><span class="text-sm font-semibold text-gray-500 uppercase">${day}</span><h4 class="text-lg font-semibold mt-1">${details.topic}</h4><div class="mt-2 text-sm">${details.resources.map(res => res.url ? `<a href="${res.url}" target="_blank" class="resource-link flex items-center space-x-2 group"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg><span>${res.text}</span></a>` : `<span class="text-gray-600">${res.text}</span>`).join('')}</div></div>`).join('')}</div></div>`;
             document.querySelectorAll('.tab-button').forEach(btn => {
                 btn.classList.toggle('active', parseInt(btn.dataset.week) === weekIndex);
             });
-
             updateChartHighlight();
         }
-
         function setupTabs() {
             studyPlan.forEach(week => {
                 const button = document.createElement('button');
@@ -429,79 +309,238 @@
                 navContainer.appendChild(button);
             });
         }
-        
-        let progressChart;
-
         function createChart() {
             const ctx = document.getElementById('progressChart').getContext('2d');
             const labels = studyPlan.map(w => `Semana ${w.week}`);
-            const data = studyPlan.map((_, index) => (index + 1) * 5);
-
-            progressChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Conceitos Acumulados',
-                        data: data,
-                        borderColor: 'rgba(79, 70, 229, 1)',
-                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
-                        borderWidth: 3,
-                        pointBackgroundColor: 'rgba(79, 70, 229, 1)',
-                        pointBorderColor: '#fff',
-                        pointHoverBackgroundColor: '#fff',
-                        pointHoverBorderColor: 'rgba(79, 70, 229, 1)',
-                        pointRadius: 5,
-                        pointHoverRadius: 7,
-                        fill: true,
-                        tension: 0.3
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: '#E5E7EB',
-                            }
-                        },
-                        x: {
-                            grid: {
-                                display: false
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            enabled: true,
-                            backgroundColor: '#111827',
-                            titleFont: { size: 14 },
-                            bodyFont: { size: 12 },
-                            padding: 10,
-                            cornerRadius: 4,
-                            displayColors: false
-                        }
-                    }
-                }
-            });
+            progressChart = new Chart(ctx, { type: 'line', data: { labels: labels, datasets: [{ label: 'Horas Estudadas', data: Array(labels.length).fill(0), borderColor: 'rgba(79, 70, 229, 1)', backgroundColor: 'rgba(79, 70, 229, 0.1)', borderWidth: 3, pointBackgroundColor: 'rgba(79, 70, 229, 1)', pointBorderColor: '#fff', pointHoverBackgroundColor: '#fff', pointHoverBorderColor: 'rgba(79, 70, 229, 1)', pointRadius: 5, pointHoverRadius: 7, fill: true, tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, grid: { color: '#E5E7EB', }, title: { display: true, text: 'Horas'} }, x: { grid: { display: false } } }, plugins: { legend: { display: false }, tooltip: { enabled: true, backgroundColor: '#111827', titleFont: { size: 14 }, bodyFont: { size: 12 }, padding: 10, cornerRadius: 4, displayColors: false } } } });
         }
-
         function updateChartHighlight() {
             if (!progressChart) return;
             const pointColors = studyPlan.map((w, index) => w.week === currentWeek ? 'rgba(236, 72, 153, 1)' : 'rgba(79, 70, 229, 1)');
             progressChart.data.datasets[0].pointBackgroundColor = pointColors;
             progressChart.update();
         }
+        
+        const logForm = document.getElementById('log-form');
+        const weekSelect = document.getElementById('week-select');
+        const ratingStarsContainer = document.getElementById('rating-stars');
+        const ratingValueInput = document.getElementById('rating-value');
+        const logList = document.getElementById('log-list');
+        const logPlaceholder = document.getElementById('log-placeholder');
+        
+        function setupProgressTracker() {
+            studyPlan.forEach(week => {
+                const option = document.createElement('option');
+                option.value = week.week;
+                option.textContent = `Semana ${week.week}: ${week.title.split(': ')[1]}`;
+                weekSelect.appendChild(option);
+            });
+
+            for(let i = 1; i <= 5; i++) {
+                const star = document.createElement('span');
+                star.innerHTML = `<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>`;
+                star.classList.add('rating-star');
+                star.dataset.value = i;
+                ratingStarsContainer.appendChild(star);
+            }
+            
+            ratingStarsContainer.addEventListener('click', (e) => {
+                const star = e.target.closest('.rating-star');
+                if(!star) return;
+                const value = parseInt(star.dataset.value);
+                ratingValueInput.value = value;
+                updateStarDisplay(value);
+            });
+
+            logForm.addEventListener('submit', handleLogSubmit);
+        }
+
+        function updateStarDisplay(value) {
+            const stars = ratingStarsContainer.querySelectorAll('.rating-star');
+            stars.forEach(s => {
+                s.classList.toggle('selected', parseInt(s.dataset.value) <= value);
+            });
+        }
+
+        async function handleLogSubmit(e) {
+            e.preventDefault();
+            if (!isFirebaseReady) {
+                alert("A conexão com a base de dados ainda não está pronta. Tente novamente em alguns segundos.");
+                return;
+            }
+            const submitButton = document.getElementById('log-submit-button');
+            submitButton.disabled = true;
+            submitButton.textContent = 'A registar...';
+
+            const logData = {
+                week: parseInt(weekSelect.value),
+                hours: parseFloat(document.getElementById('hours-input').value),
+                rating: parseInt(ratingValueInput.value),
+                notes: document.getElementById('notes-input').value.trim(),
+                timestamp: serverTimestamp()
+            };
+
+            try {
+                const logCollection = collection(db, 'artifacts', appId, 'users', userId, 'studyLogs');
+                await addDoc(logCollection, logData);
+                logForm.reset();
+                updateStarDisplay(0);
+                ratingValueInput.value = 0;
+            } catch (error) {
+                console.error("Error adding document: ", error);
+                alert("Ocorreu um erro ao guardar o seu registo.");
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Registar';
+            }
+        }
+        
+        function listenToLogs() {
+            if (!isFirebaseReady || !userId) return;
+            const logCollection = collection(db, 'artifacts', appId, 'users', userId, 'studyLogs');
+            const q = query(logCollection);
+            onSnapshot(q, (snapshot) => {
+                const logs = [];
+                snapshot.forEach(doc => {
+                    logs.push({ id: doc.id, ...doc.data() });
+                });
+                logs.sort((a, b) => b.timestamp?.toMillis() - a.timestamp?.toMillis());
+                renderLogs(logs);
+                updateChartWithLogs(logs);
+            });
+        }
+
+        function renderLogs(logs) {
+            logList.innerHTML = '';
+            if (logs.length === 0) {
+                logList.appendChild(logPlaceholder);
+                return;
+            }
+            
+            logs.forEach(log => {
+                const date = log.timestamp ? log.timestamp.toDate().toLocaleDateString('pt-BR') : 'Sem data';
+                const starsHTML = Array.from({length: 5}, (_, i) => `<svg class="w-4 h-4 ${i < log.rating ? 'text-amber-400' : 'text-gray-300'}" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>`).join('');
+
+                const logEl = document.createElement('div');
+                logEl.className = 'border rounded-md p-4 bg-gray-50';
+                logEl.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="font-bold text-gray-800">Semana ${log.week}</p>
+                            <p class="text-sm text-gray-500">${date} - ${log.hours}h</p>
+                        </div>
+                        <div class="flex">${starsHTML}</div>
+                    </div>
+                    ${log.notes ? `<p class="mt-2 text-sm text-gray-600 bg-gray-100 p-2 rounded">${log.notes}</p>` : ''}
+                `;
+                logList.appendChild(logEl);
+            });
+        }
+        
+        const progressTitle = document.getElementById('progress-title');
+
+        function updateChartWithLogs(logs) {
+            if (!progressChart) return;
+            const weeklyHours = Array(studyPlan.length).fill(0);
+            logs.forEach(log => {
+                if(log.week >= 0 && log.week < weeklyHours.length) {
+                    weeklyHours[log.week] += log.hours;
+                }
+            });
+
+            const totalHours = weeklyHours.reduce((acc, h) => acc + h, 0);
+            progressTitle.innerHTML = `A Sua Trilha de Aprendizagem <span class="text-indigo-600 font-bold">(${totalHours.toFixed(1)}h Totais)</span>`;
+            
+            progressChart.data.datasets[0].data = weeklyHours;
+            progressChart.update();
+        }
+
+        const coachButton = document.getElementById('coach-button');
+        const coachModal = document.getElementById('coach-modal');
+        const closeCoachModalButton = document.getElementById('close-coach-modal');
+        const chatForm = document.getElementById('chat-form');
+        const chatInput = document.getElementById('chat-input');
+        const chatWindow = document.getElementById('chat-window');
+        const typingIndicator = document.getElementById('typing-indicator');
+        let chatHistory = [];
+        let isLoading = false;
+        const systemPrompt = `Você é o 'PyCoach', um assistente de estudos de Python amigável, positivo e encorajador. O seu objetivo é ajudar um aluno iniciante que está a seguir um plano de estudos de 8 semanas. Mantenha as respostas claras, concisas e use uma linguagem simples. Sempre que possível, forneça exemplos de código curtos e bem explicados. Não fuja do tópico de Python e conceitos básicos de programação. Comece a conversa a apresentar-se e a perguntar como pode ajudar.`;
+        
+        function setupCoach() {
+            coachButton.addEventListener('click', openCoach);
+            closeCoachModalButton.addEventListener('click', closeCoach);
+            coachModal.addEventListener('click', (e) => { if (e.target === coachModal) closeCoach(); });
+            chatForm.addEventListener('submit', handleSendMessage);
+        }
+        function openCoach() {
+            coachModal.classList.remove('hidden');
+            setTimeout(() => { coachModal.classList.remove('opacity-0', 'scale-95'); }, 10);
+            if (chatHistory.length === 0) { addMessageToHistory('model', 'Olá! Eu sou o PyCoach, o seu assistente pessoal de estudos. Como posso ajudar a desvendar o mundo do Python hoje?'); }
+        }
+        function closeCoach() {
+            coachModal.classList.add('opacity-0', 'scale-95');
+            setTimeout(() => { coachModal.classList.add('hidden'); }, 300);
+        }
+        function addMessageToHistory(role, text) {
+            chatHistory.push({ role, parts: [{ text }] });
+            renderChat();
+        }
+        function renderChat() {
+            chatWindow.innerHTML = '';
+            chatHistory.forEach(msg => {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `coach-message w-fit max-w-xs md:max-w-md p-3 rounded-2xl`;
+                messageDiv.classList.add(msg.role === 'user' ? 'user' : 'model');
+                let formattedText = msg.parts[0].text.replace(/```python\n([\s\S]*?)```/g, '<pre class="bg-gray-800 text-white p-3 rounded-lg mt-2 text-sm overflow-x-auto"><code>$1</code></pre>');
+                formattedText = formattedText.replace(/`([^`]+)`/g, '<code class="bg-gray-200 text-red-600 px-1 rounded">$1</code>');
+                messageDiv.innerHTML = formattedText;
+                const wrapper = document.createElement('div');
+                wrapper.className = 'flex flex-col';
+                wrapper.appendChild(messageDiv);
+                chatWindow.appendChild(wrapper);
+            });
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+        async function handleSendMessage(e) {
+            e.preventDefault();
+            const userInput = chatInput.value.trim();
+            if (!userInput || isLoading) return;
+            addMessageToHistory('user', userInput);
+            chatInput.value = '';
+            setLoading(true);
+            try { await callGeminiAPI(); } catch (error) { console.error('Error calling Gemini API:', error); addMessageToHistory('model', 'Desculpe, ocorreu um erro ao tentar conectar-me. Por favor, tente novamente mais tarde.'); } finally { setLoading(false); }
+        }
+        function setLoading(state) {
+            isLoading = state;
+            typingIndicator.classList.toggle('hidden', !state);
+            chatInput.disabled = state;
+            chatForm.querySelector('button').disabled = state;
+        }
+        async function callGeminiAPI() {
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+            const payload = { contents: chatHistory, systemInstruction: { parts: [{ text: systemPrompt }] }, };
+            let response; let delay = 1000;
+            for (let i = 0; i < 5; i++) {
+                try {
+                    response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                    if (response.ok) break;
+                } catch (e) {}
+                await new Promise(resolve => setTimeout(resolve, delay));
+                delay *= 2;
+            }
+            if (!response || !response.ok) { throw new Error('API request failed after multiple retries'); }
+            const result = await response.json();
+            const modelResponse = result.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (modelResponse) { addMessageToHistory('model', modelResponse); } else { throw new Error('Invalid response structure from API'); }
+        }
 
         document.addEventListener('DOMContentLoaded', () => {
             setupTabs();
             createChart();
             renderPlan(0);
+            setupCoach();
+            setupProgressTracker();
         });
 
     </script>
